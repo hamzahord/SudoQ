@@ -69,34 +69,8 @@ void wait_for_keypressed()
 
 void SDL_FreeSurface(SDL_Surface *surface);
 
-int grayscale(char path[], char dest[]) // used in BlackandWhite
-{
-    SDL_Surface* image_surface;
-    init_sdl();
-    image_surface = load_image(path);
-    int height = image_surface->h;
-    int width = image_surface->w;
-    for (int i = 0; i < width; ++i)
-    {
-        for (int j = 0; j < height; ++j)
-        {
-            Uint32 pixel = get_pixel(image_surface, i, j);
-            Uint8 r, g, b;
-            SDL_GetRGB(pixel, image_surface->format, &r, &g, &b);
-            Uint8 average = 0.3 * r + 0.59 * g + 0.11 * b;
-            r = average;
-            g = average;
-            b = average;
-            pixel = SDL_MapRGB(image_surface->format, r, g, b);
-            put_pixel(image_surface,i,j,pixel);
-        }
-    }
-    SDL_SaveBMP(image_surface, dest);
-    return 0;
-}
 
-
-/*void makehisto(SDL_Surface *image, int rows,int cols, unsigned long *histo) // used in otsu
+void makehisto(SDL_Surface *image, int rows,int cols, unsigned long *histo) // used in otsu
 {
     for(int i =0; i<rows; i++)
     {
@@ -110,7 +84,7 @@ int grayscale(char path[], char dest[]) // used in BlackandWhite
             histo[r] +=1;
         }
     }
-}
+} 
 
 int otsu(SDL_Surface *image, int rows, int cols) // used in Blackandwhite
 {
@@ -157,9 +131,9 @@ int otsu(SDL_Surface *image, int rows, int cols) // used in Blackandwhite
     }
     return level;
 }
-*/
 
-int BlackandWhite(char source[]/*char dest[]*/)
+
+int BlackandWhite(char source[])
 {
     SDL_Surface* image_surface;
     SDL_Surface* screen_surface;
@@ -167,14 +141,10 @@ int BlackandWhite(char source[]/*char dest[]*/)
     image_surface = load_image(source);
     screen_surface = display_image(image_surface);
 
-    // grayscale(source,dest);
-    //update_surface(screen_surface, image_surface);
     wait_for_keypressed();
-    //image_surface = load_image(dest);
-    //screen_surface = display_image(image_surface);
+
     int height = image_surface->h;
     int width = image_surface->w;
-//    int tresh = otsu(image_surface, width, height);
     for (int i = 0; i < width; ++i)
     {
         for (int j = 0; j < height; ++j)
@@ -182,7 +152,32 @@ int BlackandWhite(char source[]/*char dest[]*/)
             Uint32 pixel = get_pixel(image_surface, i, j);
             Uint8 r, g, b;
             SDL_GetRGB(pixel, image_surface->format, &r, &g, &b);
-            if (r >= 180)
+            Uint8 average = 0.3 * r + 0.59 * g + 0.11 * b;
+            r = average;
+            g = average;
+            b = average;
+            Uint32 new_pixel = SDL_MapRGB(image_surface->format, r, g, b);
+            put_pixel(image_surface,i,j,new_pixel);
+        }
+    }
+    
+    update_surface(screen_surface, image_surface);
+
+
+    wait_for_keypressed();
+
+    //int tresh = otsu(image_surface, width, height);
+    int height2 = image_surface->h;
+    int width2 = image_surface->w;
+
+    for (int i = 0; i < width2; ++i)
+    {
+        for (int j = 0; j < height2; ++j)
+        {
+            Uint32 pixel = get_pixel(image_surface, i, j);
+            Uint8 r, g, b;
+            SDL_GetRGB(pixel, image_surface->format, &r, &g, &b);
+            if (r >= 200)
             {
                 r = 255;
                 g = 255;
@@ -196,23 +191,19 @@ int BlackandWhite(char source[]/*char dest[]*/)
             }
 
             Uint32 new_pixel = SDL_MapRGB(image_surface->format, r, g, b);
-            put_pixel(image_surface,i,j,new_pixel);
+            put_pixel(image_surface,i,j,new_pixel);    
         }
     }
-    //SDL_SaveBMP(image_surface, dest);
     update_surface(screen_surface, image_surface);
     wait_for_keypressed();
     SDL_FreeSurface(image_surface);
     SDL_FreeSurface(screen_surface);
-
     return 0;
 }
 
 
-
 int main()
 {
-    grayscale("my_image.jpg","res.jpg");
-    BlackandWhite("res.jpg");
+    BlackandWhite("my_image.jpg");
     return 0;
 }
