@@ -1,112 +1,196 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "solver.h"
+#include <string.h>
+int canBeDone(int*, size_t, size_t,int);
+int solver_func(int*);
+void init_grid(char*,int*);
+int empty_cell(int*,size_t*,size_t*);
+char* name_file_out(char*);
 
-char sudoku[9][9] = {
-		{'.','8','.','7','9','.','.','.','.'},
-		{'.','.','.','.','.','2','.','9','.'},
-		{'.','.','3','.','.','8','4','5','.'},
-		{'.','.','8','.','.','.','.','.','1'},
-		{'.','9','6','.','.','.','3','7','.'},
-		{'3','.','.','.','.','.','2','.','.'},
-		{'.','3','2','5','.','.','9','.','.'},
-		{'.','4','.','8','.','.','.','.','.'},
-		{'.','.','.','.','6','4','.','2','.'},
-};
 
-int main(void) {
+int solvMain(char* filename)
+{
+	printf("yo");
+	FILE *fileRead;
 
-	Solve(sudoku);
-	PrintSudoku(sudoku);
-}
-
-void PrintSudoku(char sudoku[9][9]) {
-	for (unsigned int x = 0; x < 9; x++)
+	/*if(argc !=2)
 	{
-		printf("| ");
-		for (unsigned int y = 0; y < 9; y++)
-		{
-			printf("%c | ", sudoku[x][y]);
-		}
-		printf("\n");
-	}
-}
+		printf("Please enter a file.");
+		return 0;
 
-//0 false; 1 true;
+	}*/
+	 
+	//Open your_file in read-only mode
+	fileRead = fopen(filename, "r");
 
-//is it possible to do it faster with histogram ?
-int AlreadyInColumn(char sudoku[9][9], unsigned y, char val) {
-	if (y > 8) {
-		//EXCEPTION
-	}
-	for (unsigned int x = 0; x < 9; x++)
+ 	if(fileRead == NULL)
+    	{
+		printf("Your file must be filled");
+        	perror("fopen");
+        	exit(EXIT_FAILURE);
+    	}  
+
+	//Create a buffer with the space needed
+	char buffer[110];
+   	//Seek to the beginning of the file
+   	fseek(fileRead, 0, SEEK_SET);
+
+   	//Read Data and put it on the buffer
+   	size_t useless = fread(buffer, 110, 1, fileRead);
+	useless ++;
+	char* buffer_pt = buffer;
+	fclose(fileRead);
+			
+	//create an int array of 81 element 
+	int grid2[81];
+	int* grid_pt = grid2;
+	init_grid(buffer_pt,grid_pt);
+	int good = solver_func(grid_pt);
+	if(!good)
 	{
-		if (val == sudoku[x][y])
-		{
-			return 1;
-		}
+		printf("No solution found.");
+		return 0;
 	}
-	return 0;
-}
+			
+	//Writing the file
+	FILE *fileWrite;
+	fileWrite = fopen(name_file_out(filename),"w");
 
-int AlreadyInLine(char sudoku[9][9], unsigned x, char val) {
-	if (x > 8) {
-		//EXCPETION
-	}
-	for (unsigned int y = 0; y < 9; y++)
+	for(size_t index = 0; index<82; index++)
 	{
-		if (val == sudoku[x][y])
+		fprintf(fileWrite,"%i",*(grid_pt+index));
+		if (index%3 == 2)
 		{
-			return 1;
-		}
-	}
-	return 0;
-}
-
-
-int AlreadyInSquare(char sudoku[9][9], unsigned x, unsigned y, char val) {
-
-	for (unsigned int i = 3*(x/3); i < 3 * (x / 3) + 3; i++)
-	{
-		for (unsigned int j = 3 * (y / 3); j < 3 * (y / 3) + 3; j++)
-		{
-			if (sudoku[i][j] == val) {
-				return 1;
+			if(index%9 == 8)
+			{
+				if(index%27 == 26)
+				{
+					fprintf(fileWrite,"\n");
+				}
+				fprintf(fileWrite,"\n");
+			}
+			else
+			{
+				fprintf(fileWrite," ");
 			}
 		}
 	}
-	return 0;
+	fclose(fileWrite);
+	return 1;
 }
 
-int SolveRec(char sudoku[9][9], unsigned x, unsigned y) {
-	if (x == 9 && y == 0) {
+char* name_file_out(char* name)
+{
+	size_t len_filename = 0;
+	while(*(name+len_filename) != 0)
+	{
+		len_filename++;
+	}
+
+	char* str = malloc((len_filename+7)*sizeof(char));
+	if (str == NULL)
+	{
+		printf("Not enought memory!");
+		return "error";
+	}
+	for(size_t i = 0; i<len_filename; i++)
+	{
+		*(str+i) = *(name+i);
+	}
+	*(str+len_filename) = '.';
+	*(str+len_filename+1) = 'r';
+	*(str+len_filename+2) = 'e';
+	*(str+len_filename+3) = 's';
+	*(str+len_filename+4) = 'u';
+	*(str+len_filename+5) = 'l';
+	*(str+len_filename+6) = 't';
+	*(str+len_filename+7) = 0;
+
+	return str;
+}
+
+void init_grid(char *buffer_pt,int* grid)
+{
+	size_t index_grid = 0;
+	char ch;
+
+	for(size_t index_buffer = 0; index_buffer<110; index_buffer++)
+	{
+		ch = *(buffer_pt + index_buffer);
+		if(ch == 46)
+		{
+			*(grid + index_grid) = 0;
+			index_grid++;
+		}
+		else
+		{
+			if(ch>48 && ch<58)
+			{
+				*(grid + index_grid) = (int)ch - 48;
+				index_grid++;
+			}
+		}
+	}
+}
+
+int canBeDone(int*grid, size_t row, size_t col, int n)
+{
+	//Set the position of the top left cell in the square 
+	int col_square = (col/3)*3;
+	int row_square = (row/3)*3;
+
+	//Searching
+	for(size_t index = 0; index < 9; index++)
+	{
+		if (*(grid + row*9 + index) == n) return 0; //search n in the column
+		if (*(grid + index*9 +col) == n) return 0;  //search n in the row
+		if (*(grid + (row_square+(index%3))*9 + (col_square+(index/3))) == n) return 0; //search n in the square
+	}
+
+	return 1;
+}
+
+int emptyCell(int* grid, size_t *row, size_t *col) 
+{
+	for (size_t row_index = 0; row_index < 9; row_index++) 
+	{
+    		for (size_t col_index = 0; col_index < 9; col_index++) 
+		{
+      		if (*(grid+row_index*9 + col_index)==0)  
+			{
+        		*row = row_index;
+        		*col = col_index;
+				return 1; //positive research
+      		}
+    	}
+  	}
+  	return 0;//negatif research
+}
+
+int solver_func(int *grid)
+{
+	size_t row;
+	size_t col;
+	if(!emptyCell(grid,&row,&col)) //positive exit case (all cell are filled)
+	{
 		return 1;
 	}
-	if (sudoku[x][y] == '.') {
-		for (unsigned int i = 0; i < 10; i++)
+	for(int value = 1; value<10; value++)
+	{
+		if (canBeDone(grid,row,col,value))
 		{
-			//is valid ?
-			if (!AlreadyInColumn(sudoku, y, i) && !AlreadyInLine(sudoku, x, i) && !AlreadyInSquare(sudoku, x, y, i))
+			*(grid + row*9 + col) = value;
+			if(solver_func(grid))
 			{
-				sudoku[x][y] = i +'0';
-				if (y == 8)
-				{
-					if (SolveRec(sudoku, x+1, 0) == 1) {
-						return 1;
-					}
-				}
-				else {
-					if (SolveRec(sudoku, x, y+1) == 1)
-					{
-						return 1;
-					}
-				}
+				return 1; 
+			}
+			else
+			{
+				*(grid + row*9 + col) = 0;
 			}
 		}
+			
 	}
 	return 0;
-}
-
-void Solve(char sudoku[9][9]) {
-	SolveRec(sudoku, 0, 0);
 }
