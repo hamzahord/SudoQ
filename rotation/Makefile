@@ -8,12 +8,15 @@ LDFLAGS=
 LDLIBS= `pkg-config --libs sdl` -lSDL_image -lm
 SDLLIB=`sdl2-config --cflags --libs`
 
-all: rotation.o SDL_tools.o
-	${CC} ${CPPFLAGS} ${LDLIBS} -o main *.o
+all: rotation display
+
+display: display.o
+rotation: rotation.o SDL_tools.o
 
 clean:
 	${RM} *.o
 	${RM} *.d
-	${RM} main
+	${RM} display
+	${RM} rotation
 
 # END

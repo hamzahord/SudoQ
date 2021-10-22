@@ -199,7 +199,7 @@ int BlackandWhite(char source[]/*char dest[]*/)
             put_pixel(image_surface,i,j,new_pixel);
         }
     }
-    //SDL_SaveBMP(image_surface, dest);
+    SDL_SaveBMP(image_surface, source);
     update_surface(screen_surface, image_surface);
     wait_for_keypressed();
     SDL_FreeSurface(image_surface);
