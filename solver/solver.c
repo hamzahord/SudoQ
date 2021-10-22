@@ -1,140 +1,193 @@
 #include <stdio.h>
 #include <stdlib.h>
- 
-// N is the size of the 2D matrix   N*N
-#define N 9
- 
-/* A utility function to print grid */
-int grid[N][N] = { { 3, 0, 6, 5, 0, 8, 4, 0, 0 },
-                   { 5, 2, 0, 0, 0, 0, 0, 0, 0 },
-                   { 0, 8, 7, 0, 0, 0, 0, 3, 1 },
-                   { 0, 0, 3, 0, 1, 0, 0, 8, 0 },
-                   { 9, 0, 0, 8, 6, 3, 0, 0, 5 },
-                   { 0, 5, 0, 0, 9, 0, 6, 0, 0 },
-                   { 1, 3, 0, 0, 0, 0, 2, 5, 0 },
-                   { 0, 0, 0, 0, 0, 0, 0, 7, 4 },
-                   { 0, 0, 5, 2, 0, 6, 3, 0, 0 } };
+#include "solver.h"
+#include <string.h>
+int canBeDone(int*, size_t, size_t,int);
+int solver_func(int*);
+void init_grid(char*,int*);
+int empty_cell(int*,size_t*,size_t*);
+char* name_file_out(char*);
 
-void sudokuGrid(){ //print the sudoku grid after solve
-   for (int row = 0; row < N; row++){
-      for (int col = 0; col < N; col++){
-         if(col == 3 || col == 6)
-            printf(" | ");
-         printf("%d ", grid[row][col]);
-      }
-      if(row == 2 || row == 5){
-         printf("\n");
-         for(int i = 0; i<N; i++)
-            printf("---");
-      }
-      printf("\n");
-   }
-}
- 
-// Checks whether it will be legal
-// to assign num to the
-// given row, col
-int isSafe(int grid[N][N], int row,
-                       int col, int num)
+
+int main(int argc, char *argv[])
 {
-     
-    // Check if we find the same num
-    // in the similar row , we return 0
-    for (int x = 0; x <= 8; x++)
-        if (grid[row][x] == num)
-            return 0;
- 
-    // Check if we find the same num in the
-    // similar column , we return 0
-    for (int x = 0; x <= 8; x++)
-        if (grid[x][col] == num)
-            return 0;
- 
-    // Check if we find the same num in the
-    // particular 3*3 matrix, we return 0
-    int startRow = row - row % 3,
-                 startCol = col - col % 3;
-   
-    for (int i = 0; i < 3; i++)
-        for (int j = 0; j < 3; j++)
-            if (grid[i + startRow][j +
-                          startCol] == num)
-                return 0;
- 
-    return 1;
-}
- 
-/* Takes a partially filled-in grid and attempts
-to assign values to all unassigned locations in
-such a way to meet the requirements for
-Sudoku solution (non-duplication across rows,
-columns, and boxes) */
-int solveSuduko(int grid[N][N], int row, int col)
-{
-     
-    // Check if we have reached the 8th row
-    // and 9th column (0
-    // indexed matrix) , we are
-    // returning true to avoid
-    // further backtracking
-    if (row == N - 1 && col == N)
-        return 1;
- 
-    //  Check if column value  becomes 9 ,
-    //  we move to next row and
-    //  column start from 0
-    if (col == N)
-    {
-        row++;
-        col = 0;
-    }
-   
-    // Check if the current position
-    // of the grid already contains
-    // value >0, we iterate for next column
-    if (grid[row][col] > 0)
-        return solveSuduko(grid, row, col + 1);
- 
-    for (int num = 1; num <= N; num++)
-    {
-         
-        // Check if it is safe to place
-        // the num (1-9)  in the
-        // given row ,col  ->we move to next column
-        if (isSafe(grid, row, col, num)==1)
-        {
-            /* assigning the num in the
-               current (row,col)
-               position of the grid
-               and assuming our assigned num
-               in the position
-               is correct     */
-            grid[row][col] = num;
-           
-            //  Checking for next possibility with next
-            //  column
-            if (solveSuduko(grid, row, col + 1)==1)
-                return 1;
-        }
-       
-        // Removing the assigned num ,
-        // since our assumption
-        // was wrong , and we go for next
-        // assumption with
-        // diff num value
-        grid[row][col] = 0;
-    }
-    return 0;
+
+	if(argc !=2)
+	{
+		printf("must have one argument");
+	}
+	
+	//Open your_file in read-only mode
+	
+	FILE *fileRead = NULL;
+	fileRead = fopen(argv[1], "r");
+
+ 	if(fileRead == NULL)
+    	{
+		printf("Your file must be filled");
+        	perror("fopen");
+        	exit(EXIT_FAILURE);
+    	}
+
+	//Create a buffer with the space needed
+	char buffer[110];
+   	//Seek to the beginning of the file
+   	fseek(fileRead, 0, SEEK_SET);
+
+   	//Read Data and put it on the buffer
+   	size_t useless = fread(buffer, 110, 1, fileRead);
+	useless ++;
+	char* buffer_pt = buffer;
+	fclose(fileRead);
+			
+	//create an int array of 81 element 
+	int grid2[81];
+	int* grid_pt = grid2;
+	init_grid(buffer_pt,grid_pt);
+	int good = solver_func(grid_pt);
+	if(!good)
+	{
+		printf("No solution found.");
+		return 0;
+	}
+			
+	//Writing the file
+	FILE *fileWrite;
+	fileWrite = fopen(name_file_out(argv[1]),"w");
+
+	for(size_t index = 0; index<82; index++)
+	{
+		fprintf(fileWrite,"%i",*(grid_pt+index));
+		if (index%3 == 2)
+		{
+			if(index%9 == 8)
+			{
+				if(index%27 == 26)
+				{
+					fprintf(fileWrite,"\n");
+				}
+				fprintf(fileWrite,"\n");
+			}
+			else
+			{
+				fprintf(fileWrite," ");
+			}
+		}
+	}
+	fclose(fileWrite);
+	return 0;
 }
 
- 
-int main()
+char* name_file_out(char* name)
 {
-    if (solveSuduko(grid, 0, 0)==1)
-        sudokuGrid();
-    else
-        printf("No solution exists");
- 
-    return 0;
-    // This is code is contributed by Pradeep Mondal P
+	size_t len_filename = 0;
+	while(*(name+len_filename) != 0)
+	{
+		len_filename++;
+	}
+
+	char* str = malloc((len_filename+7)*sizeof(char));
+	if (str == NULL)
+	{
+		printf("Not enought memory!");
+		return "error";
+	}
+	for(size_t i = 0; i<len_filename; i++)
+	{
+		*(str+i) = *(name+i);
+	}
+	*(str+len_filename) = '.';
+	*(str+len_filename+1) = 'r';
+	*(str+len_filename+2) = 'e';
+	*(str+len_filename+3) = 's';
+	*(str+len_filename+4) = 'u';
+	*(str+len_filename+5) = 'l';
+	*(str+len_filename+6) = 't';
+
+	return str;
+}
+
+void init_grid(char *buffer_pt,int* grid)
+{
+	size_t index_grid = 0;
+	char ch;
+
+	for(size_t index_buffer = 0; index_buffer<110; index_buffer++)
+	{
+		ch = *(buffer_pt + index_buffer);
+		if(ch == 46)
+		{
+			*(grid + index_grid) = 0;
+			index_grid++;
+		}
+		else
+		{
+			if(ch>48 && ch<58)
+			{
+				*(grid + index_grid) = (int)ch - 48;
+				index_grid++;
+			}
+		}
+	}
+}
+
+int canBeDone(int*grid, size_t row, size_t col, int n)
+{
+	//Set the position of the top left cell in the square 
+	int col_square = (col/3)*3;
+	int row_square = (row/3)*3;
+
+	//Searching
+	for(size_t index = 0; index < 9; index++)
+	{
+		if (*(grid + row*9 + index) == n) return 0; //search n in the column
+		if (*(grid + index*9 +col) == n) return 0;  //search n in the row
+		if (*(grid + (row_square+(index%3))*9 + (col_square+(index/3))) == n) return 0; //search n in the square
+	}
+
+	return 1;
+}
+
+int emptyCell(int* grid, size_t *row, size_t *col) 
+{
+	for (size_t row_index = 0; row_index < 9; row_index++) 
+	{
+    		for (size_t col_index = 0; col_index < 9; col_index++) 
+		{
+      		if (*(grid+row_index*9 + col_index)==0)  
+			{
+        		*row = row_index;
+        		*col = col_index;
+				return 1; //positive research
+      		}
+    	}
+  	}
+  	return 0;//negatif research
+}
+
+int solver_func(int *grid)
+{
+	size_t row;
+	size_t col;
+	if(!emptyCell(grid,&row,&col)) //positive exit case (all cell are filled)
+	{
+		return 1;
+	}
+	for(int value = 1; value<10; value++)
+	{
+		if (canBeDone(grid,row,col,value))
+		{
+			*(grid + row*9 + col) = value;
+			if(solver_func(grid))
+			{
+				return 1; 
+			}
+			else
+			{
+				*(grid + row*9 + col) = 0;
+			}
+		}
+			
+	}
+	return 0;
 }

@@ -210,9 +210,12 @@ int BlackandWhite(char source[]/*char dest[]*/)
 
 
 
-int main()
+int main(int argc, char* argv[])
 {
-    grayscale("my_image.jpg","res.jpg");
+    if(argc!=2){
+    	printf( "must be one argument");
+    }
+    grayscale(argv[1],"res.jpg");
     BlackandWhite("res.jpg");
     return 0;
 }

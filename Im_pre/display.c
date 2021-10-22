@@ -66,14 +66,15 @@ void wait_for_keypressed()
 
 void SDL_FreeSurface(SDL_Surface *surface);
 
-int main()
+int main(int argc, char* argv[])
 {
+   if(argc!=2){printf("must be one argument");}
    SDL_Surface* image_surface;
    SDL_Surface* screen_surface;
    
    init_sdl();
       
-   image_surface = load_image("res.jpg");
+   image_surface = load_image(argv[1]);
    screen_surface = display_image(image_surface);
 
    wait_for_keypressed();
