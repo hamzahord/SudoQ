@@ -153,13 +153,13 @@ void Rotate(char source[], char result[], double angle)
 
 int main()
 {
-    double angle=5;
+    double angle;
     printf("Enter a rotation degree : ");
+    scanf("%lf", &angle);
 
     Rotate("image.jpeg", "result.jpeg", angle);
 
     printf("Image rotated by %f degrees \n", angle);
 
     return 0;
-
 }

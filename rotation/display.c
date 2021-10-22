@@ -73,7 +73,7 @@ int main()
    
    init_sdl();
       
-   image_surface = load_image("my_image.jpg");
+   image_surface = load_image("result.jpeg");
    screen_surface = display_image(image_surface);
 
    wait_for_keypressed();
