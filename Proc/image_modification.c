@@ -84,17 +84,19 @@ void imageCrop (SDL_Surface* img , int leftBorder , int topBorder , int rightBor
 {
   SDL_Surface* image = img;
   SDL_Surface* surface;
-  surface = createSurface(bottomBorder-topBorder,rightBorder-leftBorder); //creation of empty surface with proper dimensions
-  for (int i= topBorder; i< bottomBorder ; i++)
-    {
+  surface = createSurface(bottomBorder-topBorder,rightBorder-leftBorder);
+  //creation of empty surface with proper dimensions
+  for (int i= topBorder; i< bottomBorder ; i++){
       for(int j=leftBorder; j < rightBorder ; j++)
 	{
 	  Uint32 pixel = get_pixel(image, j,i);                           //copying of pixel
 	  put_pixel(surface,j-leftBorder,i-topBorder, pixel);             // pasting onto neqw surface with proper dimensions.
 	}
+
     }
   SDL_SaveBMP(surface,label);                                             //saving of cropped image
   
+
 }
 
 
