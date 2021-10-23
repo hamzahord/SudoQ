@@ -111,12 +111,9 @@ int main()
 {
     	SDL_Surface* image_surface;
     	SDL_Surface* screen_surface = NULL;
-
     	init_sdl();
-
     	image_surface = load_image("my_image.jpg");
     	display_image(image_surface);
-
     	wait_for_keypressed();
 	
     	SDL_FreeSurface(image_surface);
